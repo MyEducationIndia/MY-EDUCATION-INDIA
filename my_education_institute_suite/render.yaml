@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: my-education-institute
+    runtime: python
+    plan: starter
+    buildCommand: pip install --upgrade pip && pip install --only-binary=:all: -r requirements.txt && alembic upgrade head && python3 -m app.db.seed_data
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: my-education-postgres
+          property: connectionString
+
+databases:
+  - name: my-education-postgres
+    plan: starter
+    databaseName: my_education
+    user: my_education_user
