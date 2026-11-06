@@ -18,6 +18,7 @@ gunicorn = ">=21.2.0"
 sqlalchemy = {extras = ["asyncio"], version = ">=2.0.27"}
 greenlet = ">=3.0.3"
 asyncpg = ">=0.29.0"
+psycopg = {extras = ["binary"], version = ">=3.1.18"}
 psycopg2-binary = ">=2.9.9"
 alembic = ">=1.13.1"
 pydantic = ">=2.5.3"
@@ -38,7 +39,6 @@ httpx = ">=0.26.0"
 ruff = ">=0.2.0"
 mypy = ">=1.8.0"
 
-# Backward compatibility with standard pip install . (PEP 621)
 [project]
 name = "my-education-india-erp"
 version = "2.0.0"
@@ -52,6 +52,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.27",
     "greenlet>=3.0.3",
     "asyncpg>=0.29.0",
+    "psycopg[binary]>=3.1.18",
     "psycopg2-binary>=2.9.9",
     "alembic>=1.13.1",
     "pydantic>=2.5.3",
