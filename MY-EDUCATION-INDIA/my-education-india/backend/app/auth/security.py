@@ -19,7 +19,10 @@ def hash_password(plain_password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return password_hasher.verify(plain_password, hashed_password)
+    try:
+        return password_hasher.verify(plain_password, hashed_password)
+    except Exception:
+        return False
 
 
 def hash_token_identifier(raw_token: str) -> str:
