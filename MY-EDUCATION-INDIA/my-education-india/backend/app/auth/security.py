@@ -7,11 +7,11 @@ from typing import Any, Dict
 import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
-from pwdlib.hashers.bcrypt import BcryptHasher
 from app.core.config import get_settings
 from app.core.exceptions import UnauthorizedException
 
-password_hasher = PasswordHash((Argon2Hasher(), BcryptHasher()))
+# Enterprise-grade password hasher using OWASP-recommended Argon2
+password_hasher = PasswordHash((Argon2Hasher(),))
 
 
 def hash_password(plain_password: str) -> str:
