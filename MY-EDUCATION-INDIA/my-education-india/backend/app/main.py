@@ -31,13 +31,78 @@ if settings.SENTRY_DSN and sentry_sdk:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app_logger.info(f"Starting {settings.APP_NAME} ({settings.APP_ENV})")
-    # Automated Zero-Shell Database Bootstrap: runs automatically on first deployment
+    
+    # Automated Zero-Shell Database Bootstrap
     try:
-        from scripts.seed_enterprise_foundation import seed_production_baseline
-        await seed_production_baseline()
-        app_logger.info("Automated institutional baseline verified on startup.")
+        from app.auth.security import hash_password
+        from app.db.session import AsyncSessionLocal
+        from app.models.institute import Institute
+        from app.models.role import Role
+        from app.models.user import User
+        from sqlalchemy import select
+
+        async with AsyncSessionLocal() as session:
+            admin_res = await session.execute(
+                select(User).where(User.username == "superadmin")
+            )
+            admin_user = admin_res.scalar_one_or_none()
+            if not admin_user:
+                # 1. Ensure Flagship Institute
+                inst_res = await session.execute(
+                    select(Institute).where(Institute.code == "MEI-HQ")
+                )
+                inst = inst_res.scalar_one_or_none()
+                if not inst:
+                    inst = Institute(
+                        code="MEI-HQ",
+                        name="MY EDUCATION INDIA",
+                        official_email="superadmin@myeducation.in",
+                        official_phone="+917312456789",
+                        address_line1="Campus Square",
+                        city="Indore",
+                        state="Madhya Pradesh",
+                        postal_code="452001",
+                        country="India",
+                    )
+                    session.add(inst)
+                    await session.flush()
+
+                # 2. Ensure Role
+                role_res = await session.execute(
+                    select(Role).where(Role.code == "SUPER_ADMIN")
+                )
+                role = role_res.scalar_one_or_none()
+                if not role:
+                    role = Role(
+                        code="SUPER_ADMIN",
+                        name="Enterprise Super Administrator",
+                        is_system_role=True,
+                        portal_subdomain="admin",
+                        institute_id=inst.id,
+                    )
+                    session.add(role)
+                    await session.flush()
+
+                # 3. Create Super Administrator with exact pwdlib hash
+                admin_user = User(
+                    email="superadmin@myeducation.in",
+                    username="superadmin",
+                    phone_number="+919999999999",
+                    first_name="Enterprise",
+                    last_name="Administrator",
+                    password_hash=hash_password("EduIndia#Production2026!"),
+                    is_active=True,
+                    is_super_admin=True,
+                    is_verified=True,
+                    institute_id=inst.id,
+                    roles=[role],
+                )
+                session.add(admin_user)
+                await session.commit()
+                app_logger.info("Super Administrator seeded successfully into PostgreSQL.")
     except Exception as e:
-        app_logger.warning(f"Automatic baseline bootstrap skipped or already initialized: {e}")
+        app_logger.warning(f"Startup database check: {e}")
+
     yield
     await engine.dispose()
     app_logger.info(f"Shut down {settings.APP_NAME} database connection pool.")
