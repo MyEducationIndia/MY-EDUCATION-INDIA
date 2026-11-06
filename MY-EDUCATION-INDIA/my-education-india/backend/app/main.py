@@ -57,15 +57,18 @@ def create_application() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID"],
         expose_headers=["X-Request-ID", "X-Subdomain-Context"],
-    )
+    )# 1. Custom enterprise middleware runs first on internal requests
     app.add_middleware(EnterpriseContextAndSecurityMiddleware, max_requests_per_minute=180)
 
-    app.add_exception_handler(EnterpriseAppException, enterprise_exception_handler)
-    app.add_exception_handler(Exception, unhandled_exception_handler)
-
-    app.include_router(api_v1_router, prefix=settings.API_V1_STR)
-    return app
-
+    # 2. CORSMiddleware added LAST so it wraps everything and handles OPTIONS preflights
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list or ["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["X-Request-ID", "X-Subdomain-Context"],
+    )
 
 app = create_application()
 
