@@ -31,6 +31,13 @@ if settings.SENTRY_DSN and sentry_sdk:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app_logger.info(f"Starting {settings.APP_NAME} ({settings.APP_ENV})")
+    # Automated Zero-Shell Database Bootstrap: runs automatically on first deployment
+    try:
+        from scripts.seed_enterprise_foundation import seed_production_baseline
+        await seed_production_baseline()
+        app_logger.info("Automated institutional baseline verified on startup.")
+    except Exception as e:
+        app_logger.warning(f"Automatic baseline bootstrap skipped or already initialized: {e}")
     yield
     await engine.dispose()
     app_logger.info(f"Shut down {settings.APP_NAME} database connection pool.")
@@ -50,17 +57,10 @@ def create_application() -> FastAPI:
         lifespan=lifespan,
     )
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins_list,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-CSRF-Token", "X-Request-ID"],
-        expose_headers=["X-Request-ID", "X-Subdomain-Context"],
-    )# 1. Custom enterprise middleware runs first on internal requests
+    # 1. Custom enterprise security middleware
     app.add_middleware(EnterpriseContextAndSecurityMiddleware, max_requests_per_minute=180)
 
-    # 2. CORSMiddleware added LAST so it wraps everything and handles OPTIONS preflights
+    # 2. Outermost CORSMiddleware to handle browser preflight OPTIONS requests cleanly
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list or ["*"],
@@ -70,18 +70,25 @@ def create_application() -> FastAPI:
         expose_headers=["X-Request-ID", "X-Subdomain-Context"],
     )
 
+    app.add_exception_handler(EnterpriseAppException, enterprise_exception_handler)
+    app.add_exception_handler(Exception, unhandled_exception_handler)
+
+    app.include_router(api_v1_router, prefix=settings.API_V1_STR)
+
+    # Root Health Probes for Render, Kubernetes & Load Balancers
+    @app.get("/health", tags=["System Health"])
+    async def root_health():
+        return {"status": "healthy", "service": "MY EDUCATION INDIA ERP V2", "env": settings.APP_ENV}
+
+    @app.get("/ready", tags=["System Health"])
+    async def root_ready():
+        return {"status": "ready", "database": "connected", "traffic": "admissible"}
+
+    @app.get("/live", tags=["System Health"])
+    async def root_live():
+        return {"status": "alive", "timestamp": "ok"}
+
+    return app
+
+
 app = create_application()
-
-# Root Health Probes for Render, Kubernetes & Load Balancers
-@app.get("/health", tags=["System Health"])
-async def root_health():
-    return {"status": "healthy", "service": "MY EDUCATION INDIA ERP V2", "env": settings.APP_ENV}
-
-@app.get("/ready", tags=["System Health"])
-async def root_ready():
-    return {"status": "ready", "database": "connected", "traffic": "admissible"}
-
-@app.get("/live", tags=["System Health"])
-async def root_live():
-    return {"status": "alive", "timestamp": "ok"}
-
