@@ -23,7 +23,7 @@ import {
   LogOut,
   X,
 } from "lucide-react";
-import { AuthenticatedUser } from "@/types/auth.types";import { AuthenticatedUser } from "@/types/auth.types";
+import { AuthenticatedUser } from "@/types/auth.types";
 
 interface AdminSidebarProps {
   user: AuthenticatedUser;
