@@ -1,3 +1,29 @@
+import { PublicHomePage } from "@/pages/PublicHomePage";
+export const AppRoutes: React.FC = () => {
+  return (
+    <Routes>
+      {/* 1. Public Facing Institute Website (Default Root '/') */}
+      <Route path="/" element={<PublicHomePage />} />
+
+      {/* 2. Public Authentication Route ('/login') */}
+      <Route path="/login" element={<LoginPage />} />
+
+      {/* 3. Protected Enterprise Command Center Routes ('/admin/*') */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/admin" element={<SuperAdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardOverviewPage />} />
+          <Route path="modules" element={<SuperAdminDashboardPage />} />
+          {/* ... all other subsystem routes ... */}
+        </Route>
+      </Route>
+
+      {/* Fallback to homepage */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
 import React from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { LoginPage } from "@/pages/auth/LoginPage";
