@@ -1,0 +1,57 @@
+services:
+  # 1. FastAPI Backend Web Service
+  - type: web
+    name: myeducation-backend
+    env: python
+    rootDir: backend
+    plan: standard
+    region: singapore
+    buildCommand: "pip install -r requirements.txt && alembic upgrade head"
+    startCommand: "gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT"
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: APP_ENV
+        value: production
+      - key: APP_NAME
+        value: "MY EDUCATION INDIA ERP"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myeducation-postgres
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: INITIAL_SUPERADMIN_EMAIL
+        value: superadmin@myeducation.in
+      - key: INITIAL_SUPERADMIN_PASSWORD
+        generateValue: true
+
+  # 2. Asynchronous Background Task Worker
+  - type: worker
+    name: myeducation-worker
+    env: python
+    rootDir: backend
+    plan: standard
+    region: singapore
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python -m app.workers.background_scheduler"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myeducation-postgres
+          property: connectionString
+
+databases:
+  # High-Availability Managed PostgreSQL
+  - name: myeducation-postgres
+    databaseName: my_education_india
+    user: myeducation_admin
+    plan: standard
+    region: singapore
+    postgresMajorVersion: "16"
