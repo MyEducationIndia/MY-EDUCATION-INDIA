@@ -22,8 +22,8 @@ import {
   Sliders,
   LogOut,
   X,
-, BookMarked , PlugZap , Contact2 , PieChart , Terminal , SlidersHorizontal, LayoutGrid } from "lucide-react";
-import { AuthenticatedUser } from "@/types/auth.types";
+} from "lucide-react";
+import { AuthenticatedUser } from "@/types/auth.types";import { AuthenticatedUser } from "@/types/auth.types";
 
 interface AdminSidebarProps {
   user: AuthenticatedUser;
