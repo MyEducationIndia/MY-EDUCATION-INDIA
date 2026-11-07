@@ -1,10 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import {
-  GraduationCap,
   ShieldCheck,
   BookOpen,
   Award,
+  GraduationCap,
   ArrowRight,
   Phone,
   MapPin,
@@ -13,7 +13,6 @@ import {
 export const PublicHomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Top Notification Bar */}
       <div className="bg-slate-900 px-4 py-2 text-xs text-slate-300">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-4">
@@ -39,7 +38,6 @@ export const PublicHomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Navigation Header */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center gap-3">
@@ -47,12 +45,8 @@ export const PublicHomePage: React.FC = () => {
               <ShieldCheck className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-lg font-black tracking-tight text-slate-900">
-                MY EDUCATION INDIA
-              </p>
-              <p className="text-[11px] font-semibold tracking-wider text-brand-700 uppercase">
-                National Flagship Institution
-              </p>
+              <p className="text-lg font-black tracking-tight text-slate-900">MY EDUCATION INDIA</p>
+              <p className="text-[11px] font-semibold tracking-wider text-brand-700 uppercase">National Flagship Institution</p>
             </div>
           </Link>
 
@@ -79,7 +73,6 @@ export const PublicHomePage: React.FC = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-brand-50/50 via-white to-slate-50 py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -113,7 +106,6 @@ export const PublicHomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Key Stats Bar */}
       <section className="border-y border-slate-200 bg-white py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-6 md:grid-cols-4 text-center">
@@ -137,7 +129,6 @@ export const PublicHomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Academic Pillars */}
       <section id="programs" className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-14">
@@ -179,7 +170,6 @@ export const PublicHomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer id="contact" className="border-t border-slate-200 bg-white pt-14 pb-8 text-xs text-slate-500">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4 pb-10 border-b border-slate-200">
