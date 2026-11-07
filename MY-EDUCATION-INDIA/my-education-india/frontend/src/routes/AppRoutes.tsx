@@ -1,5 +1,6 @@
 import React from "react";
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Link, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { PublicHomePage } from "@/pages/PublicHomePage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { SuperAdminLayout } from "@/layouts/SuperAdminLayout";
 import { DashboardOverviewPage } from "@/pages/admin/DashboardOverviewPage";
@@ -7,7 +8,6 @@ import { SuperAdminDashboardPage } from "@/pages/admin/SuperAdminDashboardPage";
 import { RolesPermissionsPage } from "@/pages/admin/RolesPermissionsPage";
 import { UsersManagementPage } from "@/pages/admin/UsersManagementPage";
 import { AuditLogsPage } from "@/pages/admin/AuditLogsPage";
-import { SubsystemViewPage } from "@/pages/admin/SubsystemViewPage";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import {
   FileBadge,
@@ -23,7 +23,122 @@ import {
   MessageSquare,
   MonitorSmartphone,
   History,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
+
+/**
+ * Self-contained Subsystem View component
+ */
+interface SubsystemViewProps {
+  title: string;
+  category: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  features: string[];
+  subdomain: string;
+  status: "ACTIVE" | "CORE_LOCKED" | "ENTERPRISE";
+}
+
+const SubsystemView: React.FC<SubsystemViewProps> = ({
+  title,
+  category,
+  description,
+  icon: Icon,
+  features,
+  subdomain,
+  status,
+}) => {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <Icon className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                  {status}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Category: <span className="font-semibold text-slate-700">{category}</span> • Subdomain:{" "}
+                <code className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-brand-600">{subdomain}.myeducation.in</code>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/admin/modules"
+              className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50"
+            >
+              Configure in Module Matrix
+            </Link>
+          </div>
+        </div>
+        <p className="mt-4 text-sm text-slate-600 border-t border-slate-100 pt-4">{description}</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+            <h2 className="text-base font-bold text-slate-900 mb-4">Core Operational Workflows</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {features.map((feat, idx) => (
+                <div key={idx} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3.5">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <span className="text-xs font-medium text-slate-700 leading-relaxed">{feat}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+            <h2 className="text-base font-bold text-slate-900 mb-2">Live PostgreSQL Data Pipeline</h2>
+            <p className="text-xs text-slate-500 mb-4">
+              Real-time synchronization with Neon PostgreSQL Serverless backend.
+            </p>
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
+              <Clock className="h-8 w-8 text-slate-400 mx-auto mb-2 animate-pulse" />
+              <p className="text-sm font-semibold text-slate-700">Subsystem Online & Governed</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                All records, audit logs, and access control policies for this subsystem are actively managed by the
+                governance matrix.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+            <h3 className="text-sm font-bold text-slate-900 mb-3">Subsystem Architecture</h3>
+            <dl className="space-y-3 text-xs">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <dt className="text-slate-500">Security Model</dt>
+                <dd className="font-semibold text-slate-800">RBAC Token Matrix</dd>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <dt className="text-slate-500">Database Engine</dt>
+                <dd className="font-semibold text-slate-800">Neon PostgreSQL 16</dd>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <dt className="text-slate-500">Isolation Layer</dt>
+                <dd className="font-semibold text-slate-800">Tenant Isolation</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-slate-500">Audit Trail</dt>
+                <dd className="font-semibold text-emerald-600">Active (Encrypted)</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isInitializing } = useAuthSession();
@@ -49,8 +164,13 @@ const ProtectedRoute: React.FC = () => {
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {/* 1. Public Facing Institute Website (Default Root '/') */}
+      <Route path="/" element={<PublicHomePage />} />
+
+      {/* 2. Public Authentication Route ('/login') */}
       <Route path="/login" element={<LoginPage />} />
 
+      {/* 3. Protected Enterprise Command Center Routes ('/admin/*') */}
       <Route element={<ProtectedRoute />}>
         <Route path="/admin" element={<SuperAdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -60,7 +180,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="certificates"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Certificates & Verification Platform"
                 category="ACADEMIC"
                 description="Digital tamper-proof credential engine with QR verification, automated PDF issuing, and revocation ledger."
@@ -80,7 +200,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="cbt"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Computer Based Testing (CBT) Platform"
                 category="EXAMINATION"
                 description="Secure national examination delivery platform with automated timer, shuffle engine, and proctoring controls."
@@ -100,7 +220,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="exams"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Examinations & Results Governance"
                 category="EXAMINATION"
                 description="Comprehensive examination scheduling, marks entry registers, grade calculation, and report cards."
@@ -120,7 +240,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="attendance"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Attendance & Leave Management"
                 category="ACADEMIC"
                 description="Biometric and classroom attendance tracking, faculty leave workflows, and shortage alerts."
@@ -140,7 +260,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="fees"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Fee & Finance Management"
                 category="FINANCE"
                 description="Institutional fee collection, installment scheduling, scholarship allocations, and GST receipt generation."
@@ -160,7 +280,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="academics"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Academic Management System"
                 category="ACADEMIC"
                 description="Curriculum governance, syllabus tracking, interactive timetable builder, and course allocation."
@@ -180,7 +300,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="admissions"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Admission & CRM Pipeline"
                 category="ADMISSION"
                 description="Online application workflows, lead scoring, applicant inquiry tracking, and document verification."
@@ -200,7 +320,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="students"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Student Information Management (SIMS)"
                 category="CORE"
                 description="Unified 360-degree scholar repository, enrollment ledger, guardian contacts, and academic history."
@@ -220,7 +340,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="cms/pages"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Website CMS & Page Builder"
                 category="PLATFORM"
                 description="Public website content management, dynamic page layout builder, and announcements editor."
@@ -240,7 +360,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="cms/enquiries"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Website Leads & Inquiries"
                 category="PLATFORM"
                 description="Capture, triage, and route public website contact inquiries and admission leads."
@@ -260,7 +380,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="settings"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Core System Engine & Settings"
                 category="CORE"
                 description="Global institutional parameters, campus branch management, and financial year definitions."
@@ -280,7 +400,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="sessions"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Active Sessions & Security"
                 category="SECURITY"
                 description="Monitor active user sessions across all devices, inspect IP addresses, and enforce logout."
@@ -300,7 +420,7 @@ export const AppRoutes: React.FC = () => {
           <Route
             path="login-history"
             element={
-              <SubsystemViewPage
+              <SubsystemView
                 title="Login History & Access Log"
                 category="SECURITY"
                 description="Detailed audit log of successful and failed authentication attempts with security alerts."
@@ -323,8 +443,8 @@ export const AppRoutes: React.FC = () => {
         </Route>
       </Route>
 
-      <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+      {/* Fallback to Public Homepage */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
