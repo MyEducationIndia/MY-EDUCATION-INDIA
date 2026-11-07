@@ -25,7 +25,6 @@ export const DashboardOverviewPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Welcome Banner */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -51,41 +50,28 @@ export const DashboardOverviewPage: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Active Institute
-            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Institute</span>
             <Building2 className="h-5 w-5 text-brand-600" />
           </div>
-          <p className="mt-2 text-xl font-bold text-slate-900 truncate">
-            {activeInstitute?.code || "MEI-HQ"}
-          </p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            {activeInstitute?.city || "Indore"}, {activeInstitute?.state || "MP"}
-          </p>
+          <p className="mt-2 text-xl font-bold text-slate-900 truncate">{activeInstitute?.code || "MEI-HQ"}</p>
+          <p className="mt-0.5 text-xs text-slate-500">{activeInstitute?.city || "Indore"}, {activeInstitute?.state || "MP"}</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Enabled Subsystems
-            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Enabled Subsystems</span>
             <Activity className="h-5 w-5 text-emerald-600" />
           </div>
-          <p className="mt-2 text-2xl font-extrabold text-slate-900">
-            {enabledCount} / {modules.length || 37}
-          </p>
+          <p className="mt-2 text-2xl font-extrabold text-slate-900">{enabledCount} / {modules.length || 37}</p>
           <p className="mt-0.5 text-xs text-emerald-600 font-medium">100% Operational</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              RBAC Roles
-            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">RBAC Roles</span>
             <ShieldCheck className="h-5 w-5 text-indigo-600" />
           </div>
           <p className="mt-2 text-2xl font-extrabold text-slate-900">9 Roles</p>
@@ -94,9 +80,7 @@ export const DashboardOverviewPage: React.FC = () => {
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Security Compliance
-            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Security Compliance</span>
             <CheckCircle2 className="h-5 w-5 text-teal-600" />
           </div>
           <p className="mt-2 text-2xl font-extrabold text-slate-900">A+ Verified</p>
@@ -104,7 +88,6 @@ export const DashboardOverviewPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Access Matrix */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <h2 className="text-base font-bold text-slate-900 mb-4">Enterprise Management Modules</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
