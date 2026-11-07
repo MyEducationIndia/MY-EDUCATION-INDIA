@@ -27,9 +27,6 @@ import {
   Clock,
 } from "lucide-react";
 
-/**
- * Self-contained Subsystem View component
- */
 interface SubsystemViewProps {
   title: string;
   category: string;
@@ -164,13 +161,9 @@ const ProtectedRoute: React.FC = () => {
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* 1. Public Facing Institute Website (Default Root '/') */}
       <Route path="/" element={<PublicHomePage />} />
-
-      {/* 2. Public Authentication Route ('/login') */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* 3. Protected Enterprise Command Center Routes ('/admin/*') */}
       <Route element={<ProtectedRoute />}>
         <Route path="/admin" element={<SuperAdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
@@ -443,7 +436,6 @@ export const AppRoutes: React.FC = () => {
         </Route>
       </Route>
 
-      {/* Fallback to Public Homepage */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
