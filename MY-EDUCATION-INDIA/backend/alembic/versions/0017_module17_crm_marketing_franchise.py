@@ -6,6 +6,7 @@ Create Date: 2026-11-06 16:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision = '0017_crm_franchise'
 down_revision = '0016_api_framework'
@@ -27,7 +28,7 @@ def upgrade() -> None:
         sa.Column('course_id', sa.String(length=36), nullable=True),
         sa.Column('message', sa.Text(), nullable=True),
         sa.Column('is_converted_to_lead', sa.Boolean(), nullable=False, default=False),
-        sa.Column('lead_id', sa.String(length=36), sa.ForeignKey('crm_leads.id'), nullable=True),
+        sa.Column('lead_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('crm_leads.id'), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
@@ -37,7 +38,7 @@ def upgrade() -> None:
         'crm_followups',
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('institute_id', sa.String(length=36), nullable=False),
-        sa.Column('lead_id', sa.String(length=36), sa.ForeignKey('crm_leads.id'), nullable=False),
+        sa.Column('lead_id', postgresql.UUID(as_uuid=True), sa.ForeignKey('crm_leads.id'), nullable=False),
         sa.Column('counsellor_id', sa.String(length=36), nullable=False),
         sa.Column('channel', sa.String(length=30), nullable=False, default='CALL'),
         sa.Column('scheduled_at', sa.DateTime(), nullable=False),
