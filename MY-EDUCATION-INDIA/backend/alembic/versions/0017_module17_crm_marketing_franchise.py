@@ -13,44 +13,7 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    # 1. crm_lead_sources
-    op.create_table(
-        'crm_lead_sources',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('institute_id', sa.String(length=36), nullable=False),
-        sa.Column('source_name', sa.String(length=100), nullable=False),
-        sa.Column('source_code', sa.String(length=50), nullable=False),
-        sa.Column('is_active', sa.Boolean(), nullable=False, default=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
-
-    # 2. crm_leads
-    op.create_table(
-        'crm_leads',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('institute_id', sa.String(length=36), nullable=False),
-        sa.Column('lead_code', sa.String(length=50), nullable=False),
-        sa.Column('full_name', sa.String(length=200), nullable=False),
-        sa.Column('mobile', sa.String(length=30), nullable=False),
-        sa.Column('email', sa.String(length=150), nullable=True),
-        sa.Column('guardian_name', sa.String(length=200), nullable=True),
-        sa.Column('course_interested_id', sa.String(length=36), nullable=True),
-        sa.Column('source_id', sa.String(length=36), sa.ForeignKey('crm_lead_sources.id'), nullable=True),
-        sa.Column('priority', sa.String(length=20), nullable=False, default='MEDIUM'),
-        sa.Column('assigned_counsellor_id', sa.String(length=36), nullable=True),
-        sa.Column('stage', sa.String(length=50), nullable=False, default='NEW_LEAD'),
-        sa.Column('status', sa.String(length=30), nullable=False, default='ACTIVE'),
-        sa.Column('expected_admission_date', sa.Date(), nullable=True),
-        sa.Column('score', sa.Integer(), nullable=False, default=50),
-        sa.Column('remarks', sa.Text(), nullable=True),
-        sa.Column('custom_fields', sa.JSON(), nullable=True),
-        sa.Column('is_active', sa.Boolean(), nullable=False, default=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.Column('updated_at', sa.DateTime(), nullable=False),
-        sa.PrimaryKeyConstraint('id')
-    )
-
+    
     # 3. crm_enquiries
     op.create_table(
         'crm_enquiries',
