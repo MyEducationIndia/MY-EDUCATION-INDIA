@@ -209,23 +209,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
 
-    # 10. cms_testimonials table
-    op.create_table(
-        "cms_testimonials",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
-        sa.Column("institute_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("institutes.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("author_name", sa.String(length=120), nullable=False),
-        sa.Column("author_role", sa.String(length=100), nullable=False),
-        sa.Column("avatar_url", sa.Text(), nullable=True),
-        sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("rating_stars", sa.Integer(), nullable=False, server_default="5"),
-        sa.Column("company_or_course", sa.String(length=150), nullable=True),
-        sa.Column("is_approved", sa.Boolean(), nullable=False, server_default=sa.text("true")),
-        sa.Column("display_order", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-    )
-
+    
     # 11. cms_enquiries table
     op.create_table(
         "cms_enquiries",
@@ -271,7 +255,6 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("cms_website_settings")
     op.drop_table("cms_enquiries")
-    op.drop_table("cms_testimonials")
     op.drop_table("cms_downloads")
     op.drop_table("cms_news")
     op.drop_table("cms_categories")
