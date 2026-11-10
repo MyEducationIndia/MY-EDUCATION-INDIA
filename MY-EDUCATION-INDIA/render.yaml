@@ -1,0 +1,70 @@
+services:
+  # Web API Service (FastAPI + Uvicorn)
+  - type: web
+    name: my-education-india-api
+    runtime: python
+    region: oregon
+    plan: standard
+    buildCommand: "poetry install --no-root"
+    startCommand: "poetry run alembic upgrade head && poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4"
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: APP_NAME
+        value: "MY EDUCATION INDIA Enterprise API"
+      - key: APP_VERSION
+        value: "1.0.0"
+      - key: DATABASE_URL
+        sync: false # Set via Render Dashboard connecting to Neon PostgreSQL (postgresql+asyncpg://...)
+      - key: SYNC_DATABASE_URL
+        sync: false # Set via Render Dashboard connecting to Neon PostgreSQL (postgresql://...)
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      - key: ALLOWED_ORIGINS
+        value: '["https://my-education-india.vercel.app","https://www.myeducationindia.com"]'
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CAMPUS_CODE
+        value: "MEI-HQ"
+      - key: CAMPUS_CITY
+        value: "Indore"
+      - key: CAMPUS_STATE
+        value: "Madhya Pradesh"
+
+  # Background Worker Service (Celery for asynchronous processing)
+  - type: worker
+    name: my-education-india-worker
+    runtime: python
+    region: oregon
+    plan: standard
+    buildCommand: "poetry install --no-root"
+    startCommand: "poetry run celery -A app.tasks.worker worker --loglevel=info"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: my-education-india-api
+          envVarKey: DATABASE_URL
+      - key: REDIS_URL
+        sync: false
