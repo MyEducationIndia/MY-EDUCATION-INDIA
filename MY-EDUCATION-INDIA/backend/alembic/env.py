@@ -1,6 +1,6 @@
 from logging.config import fileConfig
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 from app.core.config import get_settings
 from app.db.base import Base
 import app.models  # noqa: F401 - register all SQLAlchemy models
@@ -31,6 +31,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        version_table_column_length=128,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -43,10 +44,18 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
+        # Automatically expand version_num column length if alembic_version table already exists
+        try:
+            connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(128);"))
+            connection.commit()
+        except Exception:
+            pass
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
+            version_table_column_length=128,
         )
         with context.begin_transaction():
             context.run_migrations()
