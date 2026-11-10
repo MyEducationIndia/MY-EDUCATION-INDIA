@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = '0014_lib_knowledge'
-down_revision = '0013_cert_verification'
+down_revision = '0013_module13_certificates_verification'
 branch_labels = None
 depends_on = None
 
