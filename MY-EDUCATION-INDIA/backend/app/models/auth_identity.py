@@ -1,40 +1,11 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base, TimestampUUIDMixin
-
-
-class LoginHistory(Base, TimestampUUIDMixin):
-    """
-    Audited historical log of all login attempts (successes, failures, lockouts).
-    """
-    __tablename__ = "login_history"
-
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    institute_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("institutes.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True,
-    )
-    email: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
-    ip_address: Mapped[str] = mapped_column(String(64), nullable=False)
-    user_agent: Mapped[str] = mapped_column(String(512), nullable=False)
-    device_info: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    login_method: Mapped[str] = mapped_column(String(32), default="PASSWORD", nullable=False)
-    status: Mapped[str] = mapped_column(String(32), default="SUCCESS", nullable=False)
-    failure_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    attempted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
-    )
+from app.modules.auth.models import LoginHistory  # noqa: F401
 
 
 class OtpVerification(Base, TimestampUUIDMixin):
@@ -42,6 +13,7 @@ class OtpVerification(Base, TimestampUUIDMixin):
     OTP verification records (disabled by default under strict User ID + Password policy).
     """
     __tablename__ = "otp_verifications"
+    __table_args__ = {"extend_existing": True}
 
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
@@ -63,6 +35,7 @@ class SecurityPolicyConfig(Base, TimestampUUIDMixin):
     Enterprise security and password policy configuration per institute.
     """
     __tablename__ = "security_policy_configs"
+    __table_args__ = {"extend_existing": True}
 
     institute_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
