@@ -1,20 +1,19 @@
 """
-CBT Enterprise Integration Service
+CBTEnterpriseIntegrationService module
 """
-from typing import Any, Dict, List
+from typing import Any
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class CBTEnterpriseIntegrationService:
-    """Service for Computer Based Testing (CBT) enterprise integrations."""
+    def __init__(self, db: AsyncSession | None = None) -> None:
+        self.db = db
 
-    @staticmethod
-    async def list_connectors(*args: Any, **kwargs: Any) -> List[Dict[str, Any]]:
-        return []
+    async def get_integration_topology(self, *args: Any, **kwargs: Any) -> Any:
+        return {}
 
-    @staticmethod
-    async def check_health(*args: Any, **kwargs: Any) -> Dict[str, Any]:
-        return {"module": "cbt_integration", "status": "active"}
+    async def sync_lms_assessments(self, *args: Any, **kwargs: Any) -> Any:
+        return {}
 
-    @staticmethod
-    async def sync_results(*args: Any, **kwargs: Any) -> Dict[str, Any]:
-        return {"status": "synced", "count": 0}
+    async def test_webhook_dispatch(self, *args: Any, **kwargs: Any) -> Any:
+        return {}
