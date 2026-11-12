@@ -34,8 +34,18 @@ if settings.SENTRY_DSN and sentry_sdk:
 async def lifespan(app: FastAPI):
     app_logger.info(f"Starting {settings.APP_NAME} ({settings.APP_ENV})")
 
-    # 1. Patch missing columns on existing tables FIRST
-    user_column_patches = [
+    # 1. Create any missing tables safely without sorted_tables
+    for _ in range(2):
+        for table in list(Base.metadata.tables.values()):
+            try:
+                async with engine.begin() as conn:
+                    await conn.run_sync(lambda sync_conn, t=table: t.create(sync_conn, checkfirst=True))
+            except Exception as e:
+                app_logger.warning(f"Table create skip ({table.name}): {e}")
+
+    # 2. Patch missing columns on existing tables (users, institutes, audit_logs)
+    column_patches = [
+        # users
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret VARCHAR(64)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_backup_codes TEXT",
@@ -55,23 +65,40 @@ async def lifespan(app: FastAPI):
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS metadata_json JSONB NOT NULL DEFAULT '{}'::jsonb",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS institute_id UUID",
+        # institutes
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS time_zone VARCHAR(64) NOT NULL DEFAULT 'Asia/Kolkata'",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS default_language VARCHAR(16) NOT NULL DEFAULT 'en-IN'",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS currency_code VARCHAR(10) NOT NULL DEFAULT 'INR'",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS currency_symbol VARCHAR(10) NOT NULL DEFAULT '₹'",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS current_academic_year VARCHAR(64) NOT NULL DEFAULT '2026-2027'",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255)",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS custom_domain_status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE'",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS google_maps_embed_url TEXT",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS google_maps_latitude DOUBLE PRECISION",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS google_maps_longitude DOUBLE PRECISION",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS social_media_links JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS smtp_config JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS sms_gateway_config JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS whatsapp_gateway_config JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS payment_gateway_config JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS theme_config JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS seo_metadata JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS communication_settings JSONB NOT NULL DEFAULT '{}'::jsonb",
+        # audit_logs
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_username VARCHAR(100)",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_role VARCHAR(64)",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS event_category VARCHAR(50) NOT NULL DEFAULT 'CRUD_OPERATION'",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS severity VARCHAR(20) NOT NULL DEFAULT 'INFO'",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS duration_ms INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS ip_location VARCHAR(100) NOT NULL DEFAULT 'Indore, MP, India'",
+        "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS payload_checksum VARCHAR(64)",
     ]
-    try:
-        async with engine.begin() as conn:
-            for ddl in user_column_patches:
+    for ddl in column_patches:
+        try:
+            async with engine.begin() as conn:
                 await conn.execute(text(ddl))
-        app_logger.info("Users table column sync completed.")
-    except Exception as e:
-        app_logger.warning(f"User column sync warning: {e}")
-
-    # 2. Create any missing tables safely without sorted_tables
-    for _ in range(2):
-        for table in list(Base.metadata.tables.values()):
-            try:
-                async with engine.begin() as conn:
-                    await conn.run_sync(lambda sync_conn, t=table: t.create(sync_conn, checkfirst=True))
-            except Exception as e:
-                app_logger.warning(f"Table create skip ({table.name}): {e}")
+        except Exception as e:
+            app_logger.warning(f"Column patch skip: {e}")
 
     # 3. Seed Super Administrator if missing
     try:
