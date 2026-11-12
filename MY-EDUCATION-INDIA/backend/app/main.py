@@ -5,6 +5,7 @@ except ImportError:
     sentry_sdk = None
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select, text
 from app.api.v1.router import api_v1_router
 from app.core.config import get_settings
 from app.core.exceptions import (
@@ -12,6 +13,7 @@ from app.core.exceptions import (
     enterprise_exception_handler,
     unhandled_exception_handler,
 )
+from app.db.base import Base
 from app.db.session import engine
 from app.logs.logger import app_logger
 from app.middleware.enterprise_middleware import (
@@ -31,14 +33,39 @@ if settings.SENTRY_DSN and sentry_sdk:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app_logger.info(f"Starting {settings.APP_NAME} ({settings.APP_ENV})")
-    # Automated Zero-Shell Database Bootstrap
+    # Automated Zero-Shell Schema Sync & Database Bootstrap
     try:
         from app.auth.security import hash_password
         from app.db.session import AsyncSessionLocal
         from app.models.institute import Institute
         from app.models.role import Role
         from app.models.user import User
-        from sqlalchemy import select
+
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+            user_column_patches = [
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret VARCHAR(64)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_backup_codes TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS user_category VARCHAR(32) NOT NULL DEFAULT 'STUDENT'",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(100)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS admission_or_emp_id VARCHAR(64)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS dob DATE",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS blood_group VARCHAR(10)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS digital_signature_url TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS identity_verification_status VARCHAR(32) NOT NULL DEFAULT 'PENDING'",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_id_type VARCHAR(50)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_id_number VARCHAR(100)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT FALSE",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS metadata_json JSONB NOT NULL DEFAULT '{}'::jsonb",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS institute_id UUID",
+            ]
+            for ddl in user_column_patches:
+                await conn.execute(text(ddl))
 
         async with AsyncSessionLocal() as session:
             admin_res = await session.execute(
@@ -92,6 +119,8 @@ async def lifespan(app: FastAPI):
                     is_active=True,
                     is_super_admin=True,
                     is_verified=True,
+                    user_category="SUPER_ADMIN",
+                    identity_verification_status="VERIFIED",
                     institute_id=inst.id,
                     roles=[role],
                 )
