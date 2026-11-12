@@ -85,6 +85,11 @@ async def lifespan(app: FastAPI):
         "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS seo_metadata JSONB NOT NULL DEFAULT '{}'::jsonb",
         "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS communication_settings JSONB NOT NULL DEFAULT '{}'::jsonb",
         # audit_logs
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS is_custom_role BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS department_name VARCHAR(100)",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS data_scope VARCHAR(50) NOT NULL DEFAULT 'ALL'",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS field_permissions_json JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS menu_permissions_json JSONB NOT NULL DEFAULT '{}'::jsonb",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_username VARCHAR(100)",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_role VARCHAR(64)",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS event_category VARCHAR(50) NOT NULL DEFAULT 'CRUD_OPERATION'",
