@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
 from sqlalchemy import (
     Boolean,
     Column,
@@ -15,6 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampUUIDMixin
+from app.models.user import User
 
 # Association Table: Role <-> Permission
 role_permissions = Table(
@@ -68,55 +69,9 @@ class Role(Base, TimestampUUIDMixin):
     )
 
 
-class User(Base, TimestampUUIDMixin):
-    __tablename__ = "users"
-    __table_args__ = {"extend_existing": True}
-
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    username: Mapped[str] = mapped_column(String(80), unique=True, index=True, nullable=False)
-    phone_number: Mapped[str] = mapped_column(String(24), index=True, nullable=False)
-    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
-
-    # Configurable Institutional Identifiers
-    registration_number: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
-    enrollment_number: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
-    roll_number: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
-    erp_id: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
-    student_id: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
-    custom_field_identifier: Mapped[str | None] = mapped_column(String(128), index=True, nullable=True)
-
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    is_super_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-
-    # Password history stored safely as list of past hashes
-    password_history: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
-
-    institute_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("institutes.id", ondelete="SET NULL"), nullable=True, index=True
-    )
-
-    roles: Mapped[List[Role]] = relationship(
-        "Role",
-        secondary=user_roles,
-        lazy="selectin",
-    )
-    login_history: Mapped[List["LoginHistory"]] = relationship(
-        "LoginHistory", back_populates="user", cascade="all, delete-orphan", lazy="select"
-    )
-    refresh_tokens: Mapped[List["RefreshToken"]] = relationship(
-        "RefreshToken", back_populates="user", cascade="all, delete-orphan", lazy="select"
-    )
-
-
 class LoginHistory(Base, TimestampUUIDMixin):
     __tablename__ = "login_history"
+    __table_args__ = {"extend_existing": True}
 
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
@@ -125,8 +80,8 @@ class LoginHistory(Base, TimestampUUIDMixin):
         UUID(as_uuid=True), ForeignKey("institutes.id", ondelete="SET NULL"), nullable=True, index=True
     )
     identifier_used: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
-    login_criterion: Mapped[str] = mapped_column(String(64), nullable=False) # e.g. email, roll_number, erp_id
-    status: Mapped[str] = mapped_column(String(32), index=True, nullable=False) # SUCCESS, FAILED, LOCKED
+    login_criterion: Mapped[str] = mapped_column(String(64), nullable=False)  # e.g. email, roll_number, erp_id
+    status: Mapped[str] = mapped_column(String(32), index=True, nullable=False)  # SUCCESS, FAILED, LOCKED
     failure_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ip_address: Mapped[str] = mapped_column(String(64), nullable=False)
     user_agent: Mapped[str] = mapped_column(String(512), nullable=False)
@@ -134,14 +89,17 @@ class LoginHistory(Base, TimestampUUIDMixin):
     browser: Mapped[str] = mapped_column(String(64), default="Unknown", nullable=False)
     os: Mapped[str] = mapped_column(String(64), default="Unknown", nullable=False)
     session_id: Mapped[str | None] = mapped_column(String(64), index=True, nullable=True)
-    logged_in_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    logged_in_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )
     logged_out_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    user: Mapped[Optional[User]] = relationship("User", back_populates="login_history")
+    user: Mapped[Optional[User]] = relationship(User)
 
 
 class RefreshToken(Base, TimestampUUIDMixin):
     __tablename__ = "refresh_tokens"
+    __table_args__ = {"extend_existing": True}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -156,11 +114,12 @@ class RefreshToken(Base, TimestampUUIDMixin):
     revoked_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    user: Mapped[User] = relationship("User", back_populates="refresh_tokens")
+    user: Mapped[User] = relationship(User)
 
 
 class PasswordResetToken(Base, TimestampUUIDMixin):
     __tablename__ = "password_reset_tokens"
+    __table_args__ = {"extend_existing": True}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -174,6 +133,7 @@ class PasswordResetToken(Base, TimestampUUIDMixin):
 
 class EmailVerificationToken(Base, TimestampUUIDMixin):
     __tablename__ = "email_verification_tokens"
+    __table_args__ = {"extend_existing": True}
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -188,6 +148,7 @@ class SystemSetting(Base, TimestampUUIDMixin):
     __tablename__ = "system_settings"
     __table_args__ = (
         UniqueConstraint("key", "institute_id", name="uq_system_settings_key_institute"),
+        {"extend_existing": True},
     )
 
     key: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
