@@ -85,11 +85,6 @@ async def lifespan(app: FastAPI):
         "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS seo_metadata JSONB NOT NULL DEFAULT '{}'::jsonb",
         "ALTER TABLE institutes ADD COLUMN IF NOT EXISTS communication_settings JSONB NOT NULL DEFAULT '{}'::jsonb",
         # audit_logs
-        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS is_custom_role BOOLEAN NOT NULL DEFAULT FALSE",
-        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS department_name VARCHAR(100)",
-        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS data_scope VARCHAR(50) NOT NULL DEFAULT 'ALL'",
-        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS field_permissions_json JSONB NOT NULL DEFAULT '{}'::jsonb",
-        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS menu_permissions_json JSONB NOT NULL DEFAULT '{}'::jsonb",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_username VARCHAR(100)",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_role VARCHAR(64)",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS event_category VARCHAR(50) NOT NULL DEFAULT 'CRUD_OPERATION'",
@@ -97,6 +92,18 @@ async def lifespan(app: FastAPI):
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS duration_ms INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS ip_location VARCHAR(100) NOT NULL DEFAULT 'Indore, MP, India'",
         "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS payload_checksum VARCHAR(64)",
+        # roles
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS is_custom_role BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS department_name VARCHAR(100)",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS data_scope VARCHAR(50) NOT NULL DEFAULT 'ALL'",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS field_permissions_json JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE roles ADD COLUMN IF NOT EXISTS menu_permissions_json JSONB NOT NULL DEFAULT '{}'::jsonb",
+        # permissions
+        "ALTER TABLE permissions ADD COLUMN IF NOT EXISTS group_key VARCHAR(64) NOT NULL DEFAULT 'GENERAL'",
+        "ALTER TABLE permissions ADD COLUMN IF NOT EXISTS action_type VARCHAR(32) NOT NULL DEFAULT 'READ'",
+        # refresh_token_sessions
+        "ALTER TABLE refresh_token_sessions ADD COLUMN IF NOT EXISTS device_name VARCHAR(255) NOT NULL DEFAULT 'Web Browser'",
+        "ALTER TABLE refresh_token_sessions ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ",
     ]
     for ddl in column_patches:
         try:
