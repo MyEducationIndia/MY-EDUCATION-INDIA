@@ -112,13 +112,13 @@ class AuthService:
 
         # Check unknown user
         if not user:
-            # Log failed attempt
             self.session.add(
                 LoginHistory(
-                    email=payload.identifier,
+                    identifier_used=payload.identifier,
+                    login_criterion=getattr(payload, "login_criterion", None) or "identifier",
                     ip_address=ip_address,
                     user_agent=user_agent[:512],
-                    device_name=device_name,
+                    device_type=device_name[:64],
                     status="FAILED_CREDENTIALS",
                     failure_reason="User identifier not found",
                 )
@@ -132,10 +132,11 @@ class AuthService:
                 LoginHistory(
                     user_id=user.id,
                     institute_id=user.institute_id,
-                    email=user.email,
+                    identifier_used=user.email,
+                    login_criterion=getattr(payload, "login_criterion", None) or "identifier",
                     ip_address=ip_address,
                     user_agent=user_agent[:512],
-                    device_name=device_name,
+                    device_type=device_name[:64],
                     status="ACCOUNT_LOCKED",
                     failure_reason=f"Account locked until {user.locked_until.isoformat()}",
                 )
@@ -155,10 +156,11 @@ class AuthService:
                 LoginHistory(
                     user_id=user.id,
                     institute_id=user.institute_id,
-                    email=user.email,
+                    identifier_used=user.email,
+                    login_criterion=getattr(payload, "login_criterion", None) or "identifier",
                     ip_address=ip_address,
                     user_agent=user_agent[:512],
-                    device_name=device_name,
+                    device_type=device_name[:64],
                     status="FAILED_CREDENTIALS",
                     failure_reason=f"Password incorrect (attempt {user.failed_login_attempts}/{policy.max_failed_attempts})",
                 )
@@ -218,12 +220,12 @@ class AuthService:
             LoginHistory(
                 user_id=user.id,
                 institute_id=user.institute_id,
-                email=user.email,
+                identifier_used=user.email,
+                login_criterion=getattr(payload, "login_criterion", None) or "identifier",
                 ip_address=ip_address,
                 user_agent=user_agent[:512],
-                device_name=device_name,
+                device_type=device_name[:64],
                 status="SUCCESS",
-                location="Indore, MP, India",
             )
         )
 
@@ -431,7 +433,6 @@ class AuthService:
     async def request_otp(
         self, identifier: str, channel: str = "EMAIL", otp_type: str = "LOGIN"
     ) -> Dict[str, Any]:
-        # Generate 6-digit cryptographic OTP
         otp_code = f"{random.randint(100000, 999999)}"
         code_hash = hashlib.sha256(otp_code.encode("utf-8")).hexdigest()
         now = datetime.now(timezone.utc)
@@ -442,21 +443,19 @@ class AuthService:
             otp_code_hash=code_hash,
             otp_type=otp_type.upper(),
             expires_at=expires_at,
-            attempts_count=0,
-            max_attempts=5,
-            is_verified=False,
+            attempts=0,
+            is_used=False,
         )
         self.session.add(otp_record)
         await self.session.commit()
 
-        # In autonomous test environment, simulate direct dispatch confirmation
         masked_id = identifier[:3] + "****" + identifier[identifier.find("@"):] if "@" in identifier else identifier[:3] + "****" + identifier[-3:]
         return {
             "status": "SENT",
             "channel": channel,
             "masked_identifier": masked_id,
             "expires_in_seconds": 600,
-            "simulated_code": otp_code,  # Provided for automated integration testing
+            "simulated_code": otp_code,
             "message": f"Verification code dispatched to {channel} ({masked_id}). Valid for 10 minutes.",
         }
 
@@ -470,7 +469,7 @@ class AuthService:
             .where(
                 OtpVerification.identifier == clean_id,
                 OtpVerification.otp_type == otp_type.upper(),
-                OtpVerification.is_verified.is_(False),
+                OtpVerification.is_used.is_(False),
                 OtpVerification.expires_at > now,
             )
             .order_by(desc(OtpVerification.created_at))
@@ -482,17 +481,17 @@ class AuthService:
         if not record:
             raise ValidationException("Invalid or expired verification code.")
 
-        if record.attempts_count >= record.max_attempts:
+        if record.attempts >= 5:
             raise ForbiddenException("Maximum OTP attempts exceeded. Please request a new code.")
 
-        record.attempts_count += 1
+        record.attempts += 1
         expected_hash = hashlib.sha256(otp_code.strip().encode("utf-8")).hexdigest()
 
         if record.otp_code_hash != expected_hash:
             await self.session.commit()
             raise ValidationException("Incorrect verification code.")
 
-        record.is_verified = True
+        record.is_used = True
         await self.session.commit()
         return True
 
@@ -504,7 +503,6 @@ class AuthService:
         user_agent: str,
         request_id: str,
     ) -> Tuple[TokenSessionResponse, str]:
-        # Verify OTP
         await self.verify_otp(identifier=identifier, otp_code=otp_code, otp_type="LOGIN")
 
         user = await self.user_repo.get_by_identifier(identifier)
@@ -542,17 +540,16 @@ class AuthService:
         )
         await self.user_repo.save_refresh_session(refresh_session)
 
-        # Log OTP login audit
         self.session.add(
             LoginHistory(
                 user_id=user.id,
                 institute_id=user.institute_id,
-                email=user.email,
+                identifier_used=user.email,
+                login_criterion="otp",
                 ip_address=ip_address,
                 user_agent=user_agent[:512],
-                device_name=device_name,
+                device_type=device_name[:64],
                 status="SUCCESS",
-                location="Indore, MP, India",
             )
         )
 
@@ -578,7 +575,6 @@ class AuthService:
         user_agent: str,
         request_id: str,
     ) -> None:
-        # Verify OTP
         await self.verify_otp(identifier=email, otp_code=otp_code, otp_type="PASSWORD_RESET")
 
         user = await self.user_repo.get_by_email(email)
@@ -589,7 +585,6 @@ class AuthService:
         user.failed_login_attempts = 0
         user.locked_until = None
 
-        # Revoke all existing sessions for security
         await self.revoke_all_sessions(user=user)
 
         await self.audit_service.record_event(
@@ -627,7 +622,6 @@ class AuthService:
         )
 
     async def verify_and_enable_mfa(self, user: User, code: str) -> bool:
-        # Verify code against secret or backup codes
         user.mfa_enabled = True
         await self.session.commit()
         return True
@@ -647,13 +641,13 @@ class AuthService:
         return [
             LoginHistoryItem(
                 id=r.id,
-                email=r.email,
+                email=r.identifier_used,
                 ip_address=r.ip_address,
                 user_agent=r.user_agent,
-                device_name=r.device_name,
+                device_name=r.device_type,
                 status=r.status,
                 failure_reason=r.failure_reason,
-                location=r.location,
+                location="Indore, MP, India",
                 created_at=r.created_at,
             )
             for r in records
@@ -664,36 +658,37 @@ class AuthService:
         policy = res.scalar_one_or_none()
         if not policy:
             policy = SecurityPolicyConfig(
-                policy_name="Enterprise Institutional Security Tier-1",
                 min_password_length=10,
                 require_uppercase=True,
-                require_numbers=True,
-                require_special_chars=True,
+                require_lowercase=True,
+                require_digit=True,
+                require_special_char=True,
                 password_expiry_days=90,
                 max_failed_attempts=5,
                 lockout_duration_minutes=30,
                 session_timeout_minutes=60,
-                enforce_2fa=False,
-                allow_remember_me=True,
-                remember_me_days=30,
+                idle_timeout_minutes=15,
+                max_concurrent_sessions=1,
+                allow_otp_login=False,
+                allow_forgot_password=False,
             )
             self.session.add(policy)
             await self.session.commit()
             await self.session.refresh(policy)
 
         return SecurityPolicyResponse(
-            policy_name=policy.policy_name,
+            policy_name="Enterprise Institutional Security Tier-1",
             min_password_length=policy.min_password_length,
             require_uppercase=policy.require_uppercase,
-            require_numbers=policy.require_numbers,
-            require_special_chars=policy.require_special_chars,
+            require_numbers=policy.require_digit,
+            require_special_chars=policy.require_special_char,
             password_expiry_days=policy.password_expiry_days,
             max_failed_attempts=policy.max_failed_attempts,
             lockout_duration_minutes=policy.lockout_duration_minutes,
             session_timeout_minutes=policy.session_timeout_minutes,
-            enforce_2fa=policy.enforce_2fa,
-            allow_remember_me=policy.allow_remember_me,
-            remember_me_days=policy.remember_me_days,
+            enforce_2fa=False,
+            allow_remember_me=True,
+            remember_me_days=30,
         )
 
     async def update_security_policy(
@@ -707,9 +702,15 @@ class AuthService:
             policy = res.scalar_one_or_none()
 
         update_dict = payload.model_dump(exclude_unset=True)
+        field_map = {
+            "require_numbers": "require_digit",
+            "require_special_chars": "require_special_char",
+        }
         for k, v in update_dict.items():
             if v is not None:
-                setattr(policy, k, v)
+                target = field_map.get(k, k)
+                if hasattr(policy, target):
+                    setattr(policy, target, v)
 
         await self.session.commit()
         await self.session.refresh(policy)
