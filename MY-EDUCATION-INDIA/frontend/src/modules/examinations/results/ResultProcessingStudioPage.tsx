@@ -5,26 +5,14 @@ import {
   Award,
   Trophy,
   GraduationCap,
-  Sparkles,
   TrendingUp,
-  Percent,
   Sliders,
   CheckCircle2,
-  AlertCircle,
-  FileText,
   Search,
-  Filter,
   Download,
-  Share2,
   Send,
-  Eye,
-  RefreshCw,
   ChevronRight,
-  ShieldCheck,
-  Check,
   BarChart3,
-  Layers,
-  ArrowUpRight,
   BookOpen,
 } from "lucide-react";
 
@@ -55,7 +43,12 @@ interface StudentResult {
   sgpa: number;
   cgpa: number;
   overallGrade: string;
-  division: "FIRST_CLASS_DISTINCTION" | "FIRST_CLASS" | "SECOND_CLASS" | "PASS_CLASS" | "FAIL";
+  division:
+    | "FIRST_CLASS_DISTINCTION"
+    | "FIRST_CLASS"
+    | "SECOND_CLASS"
+    | "PASS_CLASS"
+    | "FAIL";
   classRank: number;
   resultStatus: "PASSED" | "PROMOTED_WITH_BACKLOG" | "DETAINED";
   isPublished: boolean;
@@ -78,7 +71,7 @@ const initialCohortResults: StudentResult[] = [
     totalMaxMarks: 600.0,
     percentage: 94.17,
     sgpa: 9.42,
-    cgpa: 9.50,
+    cgpa: 9.5,
     overallGrade: "O",
     division: "FIRST_CLASS_DISTINCTION",
     classRank: 1,
@@ -108,7 +101,7 @@ const initialCohortResults: StudentResult[] = [
     totalMaxMarks: 600.0,
     percentage: 90.33,
     sgpa: 9.15,
-    cgpa: 9.20,
+    cgpa: 9.2,
     overallGrade: "O",
     division: "FIRST_CLASS_DISTINCTION",
     classRank: 2,
@@ -138,7 +131,7 @@ const initialCohortResults: StudentResult[] = [
     totalMaxMarks: 600.0,
     percentage: 85.83,
     sgpa: 8.75,
-    cgpa: 8.80,
+    cgpa: 8.8,
     overallGrade: "A+",
     division: "FIRST_CLASS_DISTINCTION",
     classRank: 3,
@@ -167,7 +160,7 @@ const initialCohortResults: StudentResult[] = [
     totalMarksObtained: 496.0,
     totalMaxMarks: 600.0,
     percentage: 82.67,
-    sgpa: 8.40,
+    sgpa: 8.4,
     cgpa: 8.45,
     overallGrade: "A+",
     division: "FIRST_CLASS_DISTINCTION",
@@ -196,9 +189,9 @@ const initialCohortResults: StudentResult[] = [
     totalCreditsEarned: 20.0,
     totalMarksObtained: 465.0,
     totalMaxMarks: 600.0,
-    percentage: 77.50,
+    percentage: 77.5,
     sgpa: 7.85,
-    cgpa: 7.90,
+    cgpa: 7.9,
     overallGrade: "A",
     division: "FIRST_CLASS",
     classRank: 5,
@@ -219,14 +212,12 @@ const initialCohortResults: StudentResult[] = [
 export const ResultProcessingStudioPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"cohort" | "merit" | "transcript" | "statistics">("cohort");
   const [selectedGradingModel, setSelectedGradingModel] = useState<"ABSOLUTE" | "RELATIVE">("ABSOLUTE");
-  const [relativeTopPct, setRelativeTopPct] = useState<number>(10.0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<StudentResult | null>(initialCohortResults[0]);
   const [cohortResults, setCohortResults] = useState<StudentResult[]>(initialCohortResults);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [publishSuccessBanner, setPublishSuccessBanner] = useState<boolean>(false);
 
-  // Recalculate cohort results on grading model change
   const handleRecalculate = (model: "ABSOLUTE" | "RELATIVE") => {
     setIsProcessing(true);
     setTimeout(() => {
@@ -235,14 +226,13 @@ export const ResultProcessingStudioPage: React.FC = () => {
         if (model === "RELATIVE") {
           let grade = "A";
           let sgpa = s.sgpa;
-          if (idx === 0) { grade = "O"; sgpa = 9.80; }
+          if (idx === 0) { grade = "O"; sgpa = 9.8; }
           else if (idx === 1) { grade = "A+"; sgpa = 9.25; }
-          else if (idx === 2) { grade = "A"; sgpa = 8.60; }
-          else if (idx === 3) { grade = "B+"; sgpa = 8.10; }
-          else { grade = "B"; sgpa = 7.50; }
+          else if (idx === 2) { grade = "A"; sgpa = 8.6; }
+          else if (idx === 3) { grade = "B+"; sgpa = 8.1; }
+          else { grade = "B"; sgpa = 7.5; }
           return { ...s, gradingSystem: "RELATIVE" as const, overallGrade: grade, sgpa };
         } else {
-          // UGC Absolute
           let grade = "A";
           if (s.percentage >= 90) grade = "O";
           else if (s.percentage >= 80) grade = "A+";
@@ -253,7 +243,7 @@ export const ResultProcessingStudioPage: React.FC = () => {
       });
       setCohortResults(updated);
       if (selectedStudent) {
-        setSelectedStudent(updated.find(u => u.rollNumber === selectedStudent.rollNumber) || updated[0]);
+        setSelectedStudent(updated.find((u) => u.rollNumber === selectedStudent.rollNumber) || updated[0]);
       }
       setIsProcessing(false);
     }, 400);
@@ -273,7 +263,6 @@ export const ResultProcessingStudioPage: React.FC = () => {
     );
   }, [cohortResults, searchTerm]);
 
-  // Statistics
   const stats = useMemo(() => {
     const total = cohortResults.length;
     const passed = cohortResults.filter((s) => s.resultStatus === "PASSED").length;
@@ -478,7 +467,6 @@ export const ResultProcessingStudioPage: React.FC = () => {
       {/* Main Tab Views */}
       {activeTab === "cohort" && (
         <div className="space-y-4">
-          {/* Search bar & filter */}
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -495,7 +483,6 @@ export const ResultProcessingStudioPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Results Table */}
           <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -617,7 +604,6 @@ export const ResultProcessingStudioPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Top 3 Podium Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Rank 1: Gold */}
             <div className="p-6 rounded-2xl border-2 border-amber-400 dark:border-amber-500 bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/30 dark:to-gray-800 shadow-md relative overflow-hidden">
@@ -724,7 +710,6 @@ export const ResultProcessingStudioPage: React.FC = () => {
       {/* Transcript Card Tab */}
       {activeTab === "transcript" && selectedStudent && (
         <div className="space-y-6">
-          {/* Header of Transcript */}
           <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 pb-5">
               <div className="flex items-center gap-4">
@@ -869,7 +854,7 @@ export const ResultProcessingStudioPage: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-xl border border-indigo-100 dark:border-indigo-900 bg-indigo-50/40 dark:bg-indigo-950/20 text-xs text-indigo-900 dark:text-indigo-300">
-              <span className="font-semibold">Autonomous Evaluation Engine Formula:</span> SGPA is calculated as $\sum (\text{Course Credits} \times \text{Grade Points}) / \sum (\text{Course Credits})$, conforming strictly to UGC & AICTE autonomous institute regulations.
+              <span className="font-semibold">Autonomous Evaluation Engine Formula:</span> SGPA = Σ(Course Credits × Grade Points) / Σ(Course Credits), conforming strictly to UGC & AICTE autonomous institute regulations.
             </div>
           </div>
         </div>
