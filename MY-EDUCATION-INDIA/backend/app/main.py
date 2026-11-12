@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
             except Exception as e:
                 app_logger.warning(f"Table create skip ({table.name}): {e}")
 
-    # 2. Patch missing columns on existing tables (users, institutes, audit_logs)
+    # 2. Patch missing columns on existing tables
     column_patches = [
         # users
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE",
@@ -104,6 +104,12 @@ async def lifespan(app: FastAPI):
         # refresh_token_sessions
         "ALTER TABLE refresh_token_sessions ADD COLUMN IF NOT EXISTS device_name VARCHAR(255) NOT NULL DEFAULT 'Web Browser'",
         "ALTER TABLE refresh_token_sessions ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ",
+        # website_navigation_menus
+        "ALTER TABLE website_navigation_menus ADD COLUMN IF NOT EXISTS badge_text VARCHAR(64)",
+        "ALTER TABLE website_navigation_menus ADD COLUMN IF NOT EXISTS description TEXT",
+        "ALTER TABLE website_navigation_menus ADD COLUMN IF NOT EXISTS category VARCHAR(64)",
+        "ALTER TABLE website_navigation_menus ADD COLUMN IF NOT EXISTS icon_name VARCHAR(64)",
+        "ALTER TABLE website_navigation_menus ADD COLUMN IF NOT EXISTS is_mega_menu BOOLEAN NOT NULL DEFAULT FALSE",
     ]
     for ddl in column_patches:
         try:
@@ -204,9 +210,16 @@ def create_application() -> FastAPI:
     app.add_middleware(EnterpriseContextAndSecurityMiddleware, max_requests_per_minute=180)
 
     # 2. Outermost CORSMiddleware to handle browser preflight OPTIONS requests cleanly
+    allowed_origins = list({
+        *[o for o in (settings.cors_origins_list or []) if o != "*"],
+        "https://my-education-india-green.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    })
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins_list or ["*"],
+        allow_origins=allowed_origins,
+        allow_origin_regex=r"https://.*\.vercel\.app",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
