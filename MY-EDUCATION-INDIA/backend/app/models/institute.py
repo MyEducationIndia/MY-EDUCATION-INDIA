@@ -1,11 +1,10 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List
 from sqlalchemy import Boolean, Float, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampUUIDMixin
 
 if TYPE_CHECKING:
-    from app.models.academic_session import AcademicSession
     from app.models.module_config import SystemModuleConfig
     from app.models.user import User
 
@@ -63,7 +62,4 @@ class Institute(Base, TimestampUUIDMixin):
     users: Mapped[List["User"]] = relationship("User", back_populates="institute", lazy="selectin")
     module_configs: Mapped[List["SystemModuleConfig"]] = relationship(
         "SystemModuleConfig", back_populates="institute", cascade="all, delete-orphan", lazy="selectin"
-    )
-    academic_sessions: Mapped[List["AcademicSession"]] = relationship(
-        "AcademicSession", back_populates="institute", cascade="all, delete-orphan", lazy="selectin"
     )
