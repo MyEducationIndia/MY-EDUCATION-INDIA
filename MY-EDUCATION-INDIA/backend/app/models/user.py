@@ -72,7 +72,11 @@ class User(Base, TimestampUUIDMixin):
         UUID(as_uuid=True), ForeignKey("institutes.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
-    institute: Mapped["Institute | None"] = relationship("Institute", back_populates="users", lazy="selectin")
+    institute: Mapped["Institute | None"] = relationship(
+        "app.models.institute.Institute",
+        back_populates="users",
+        lazy="selectin",
+    )
     roles: Mapped[List["Role"]] = relationship(
         "Role",
         secondary=user_roles_association,
