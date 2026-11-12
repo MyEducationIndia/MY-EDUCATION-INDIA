@@ -34,7 +34,7 @@ if settings.SENTRY_DSN and sentry_sdk:
 async def lifespan(app: FastAPI):
     app_logger.info(f"Starting {settings.APP_NAME} ({settings.APP_ENV})")
 
-    # 1. Patch missing columns on existing tables FIRST (isolated so nothing skips it)
+    # 1. Patch missing columns on existing tables FIRST
     user_column_patches = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN NOT NULL DEFAULT FALSE",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret VARCHAR(64)",
@@ -64,12 +64,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         app_logger.warning(f"User column sync warning: {e}")
 
-    # 2. Create any missing tables
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    except Exception as e:
-        app_logger.warning(f"Metadata create_all warning: {e}")
+    # 2. Create any missing tables individually so one error doesn't roll back the rest
+    for table in Base.metadata.sorted_tables:
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(lambda sync_conn, t=table: t.create(sync_conn, checkfirst=True))
+        except Exception as e:
+            app_logger.warning(f"Table create skip ({table.name}): {e}")
 
     # 3. Seed Super Administrator if missing
     try:
