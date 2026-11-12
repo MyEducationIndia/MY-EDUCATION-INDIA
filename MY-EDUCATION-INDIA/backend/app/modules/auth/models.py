@@ -1,14 +1,12 @@
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 from sqlalchemy import (
     Boolean,
-    Column,
     DateTime,
     ForeignKey,
     Integer,
     String,
-    Table,
     Text,
     UniqueConstraint,
 )
@@ -18,24 +16,15 @@ from app.db.base import Base, TimestampUUIDMixin
 from app.models.role import Role
 from app.models.user import User, user_roles_association as user_roles
 
-# Association Table: Role <-> Permission
-role_permissions = Table(
-    "role_permissions",
-    Base.metadata,
-    Column("role_id", UUID(as_uuid=True), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-    Column("permission_id", UUID(as_uuid=True), ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
-    extend_existing=True,
-)
+try:
+    from app.models.role import Permission
+except ImportError:
+    from app.models.permission import Permission
 
-
-class Permission(Base, TimestampUUIDMixin):
-    __tablename__ = "permissions"
-    __table_args__ = {"extend_existing": True}
-
-    code: Mapped[str] = mapped_column(String(120), unique=True, index=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(150), nullable=False)
-    module_key: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+try:
+    from app.models.role import role_permissions
+except ImportError:
+    role_permissions = None
 
 
 class LoginHistory(Base, TimestampUUIDMixin):
