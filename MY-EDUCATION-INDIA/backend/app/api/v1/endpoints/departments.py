@@ -50,3 +50,15 @@ async def create_department(
         "description": payload.description,
         "is_active": payload.is_active,
     }
+@router.get("/designations")
+async def list_designations(
+    current_user: User = Depends(get_current_user),
+) -> List[Dict[str, Any]]:
+    """List standard institutional designations."""
+    return [
+        {"id": "des-1", "code": "PROF", "name": "Professor", "is_active": True},
+        {"id": "des-2", "code": "ASSOC_PROF", "name": "Associate Professor", "is_active": True},
+        {"id": "des-3", "code": "ASST_PROF", "name": "Assistant Professor", "is_active": True},
+        {"id": "des-4", "code": "HOD", "name": "Head of Department", "is_active": True},
+        {"id": "des-5", "code": "ADMIN", "name": "Administrative Officer", "is_active": True},
+    ]
