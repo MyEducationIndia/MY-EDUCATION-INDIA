@@ -64,13 +64,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         app_logger.warning(f"User column sync warning: {e}")
 
-    # 2. Create any missing tables individually so one error doesn't roll back the rest
-    for table in Base.metadata.sorted_tables:
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(lambda sync_conn, t=table: t.create(sync_conn, checkfirst=True))
-        except Exception as e:
-            app_logger.warning(f"Table create skip ({table.name}): {e}")
+    # 2. Create any missing tables safely without sorted_tables
+    for _ in range(2):
+        for table in list(Base.metadata.tables.values()):
+            try:
+                async with engine.begin() as conn:
+                    await conn.run_sync(lambda sync_conn, t=table: t.create(sync_conn, checkfirst=True))
+            except Exception as e:
+                app_logger.warning(f"Table create skip ({table.name}): {e}")
 
     # 3. Seed Super Administrator if missing
     try:
