@@ -14,6 +14,7 @@ POSTGRES_NAMING_CONVENTION = {
 
 
 class Base(DeclarativeBase):
+    __allow_unmapped__ = True
     metadata = MetaData(naming_convention=POSTGRES_NAMING_CONVENTION)
 
 
