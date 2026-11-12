@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import {
   ShieldCheck,
@@ -14,9 +14,6 @@ import {
   AlertCircle,
   Moon,
   Sun,
-  KeyRound,
-  CheckCircle2,
-  X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { authApi } from "../api/authApi";
@@ -39,7 +36,6 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [selectedCriterion, setSelectedCriterion] = useState<string>("identifier");
-
 
   // Fetch dynamic institutional auth settings from PostgreSQL
   const { data: settings } = useQuery({
@@ -102,15 +98,18 @@ export const LoginPage: React.FC = () => {
         ...values,
         login_criterion: selectedCriterion,
       });
-      const origin = (location.state as { from?: { pathname: string } })?.from?.pathname || "/admin/dashboard";
+      const origin =
+        (location.state as { from?: { pathname: string } })?.from?.pathname ||
+        "/admin/dashboard";
       navigate(origin, { replace: true });
     } catch (err) {
       const axiosErr = err as AxiosError<{ error?: { message?: string } }>;
-      const msg = axiosErr.response?.data?.error?.message || "Invalid credentials. Please verify your details.";
+      const msg =
+        axiosErr.response?.data?.error?.message ||
+        "Invalid credentials. Please verify your details.";
       setServerError(msg);
     }
   };
-
 
   return (
     <div className="relative flex min-h-screen flex-col justify-center bg-slate-900 px-4 py-12 transition-colors duration-200 dark:bg-slate-950 sm:px-6 lg:px-8">
@@ -122,7 +121,11 @@ export const LoginPage: React.FC = () => {
           className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-slate-300 transition hover:bg-slate-700 hover:text-white"
           aria-label="Toggle visual theme"
         >
-          {isDarkMode ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-slate-300" />}
+          {isDarkMode ? (
+            <Sun className="h-5 w-5 text-amber-400" />
+          ) : (
+            <Moon className="h-5 w-5 text-slate-300" />
+          )}
         </button>
       </div>
 
@@ -197,7 +200,9 @@ export const LoginPage: React.FC = () => {
                 htmlFor="identifier"
                 className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
               >
-                {selectedCriterion === "identifier" ? "Institutional Identifier" : selectedCriterion.replace("_", " ")}
+                {selectedCriterion === "identifier"
+                  ? "Institutional Identifier"
+                  : selectedCriterion.replace("_", " ")}
               </label>
               <div className="relative mt-1.5">
                 <UserCheck className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
@@ -211,7 +216,9 @@ export const LoginPage: React.FC = () => {
                 />
               </div>
               {errors.identifier && (
-                <p className="mt-1 text-xs text-rose-400">{errors.identifier.message}</p>
+                <p className="mt-1 text-xs text-rose-400">
+                  {errors.identifier.message}
+                </p>
               )}
             </div>
 
@@ -223,11 +230,6 @@ export const LoginPage: React.FC = () => {
                 >
                   Password
                 </label>
-                <button
-                  type="button"
-                  className="text-xs font-medium text-brand-400 transition hover:text-brand-300"
-                >
-                </button>
               </div>
               <div className="relative mt-1.5">
                 <Lock className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
@@ -245,11 +247,17 @@ export const LoginPage: React.FC = () => {
                   className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1 text-xs text-rose-400">{errors.password.message}</p>
+                <p className="mt-1 text-xs text-rose-400">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -270,7 +278,9 @@ export const LoginPage: React.FC = () => {
               disabled={isSubmitting}
               className="mt-2 flex w-full items-center justify-center rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Establishing Authenticated Session..." : "Sign In to Enterprise Gateway"}
+              {isSubmitting
+                ? "Establishing Authenticated Session..."
+                : "Sign In to Enterprise Gateway"}
             </button>
           </form>
 
@@ -280,8 +290,6 @@ export const LoginPage: React.FC = () => {
               and Zero-LocalStorage In-Memory Token Architecture.
             </p>
           </div>
-        </div>
-      </motion.div>
 
           <div className="mt-4 rounded-xl bg-slate-950/60 border border-slate-800 p-3 text-center">
             <p className="text-[11px] text-amber-400 font-semibold">
